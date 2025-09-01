@@ -7,6 +7,12 @@
 #   --sanitize   : Run with memory sanitizers
 #   --release    : Run optimized release build
 #   --individual : Run individual test suites separately
+#   --tensor     : Run only tensor tests
+#   --matmul     : Run only matrix multiplication tests
+#   --relu       : Run only ReLU tests
+#   --sigmoid    : Run only sigmoid tests
+#   --softmax    : Run only softmax tests
+#   --valgrind   : Run with valgrind memory check
 #   --all        : Run all test configurations (default)
 #   --help       : Show this help message
 
@@ -57,13 +63,25 @@ run_test_config() {
         return 1
     fi
     
-    # Run tests - either individual or combined
+    # Run tests - individual, single suite, or combined
     if [ "$individual" = "true" ]; then
         if run_individual_tests; then
             print_success "All individual tests passed ($config)"
             return 0
         else
             print_error "Some individual tests failed ($config)"
+            return 1
+        fi
+    elif [ -n "$4" ]; then
+        # Single test suite
+        local filter="$4"
+        local suite_name=$(echo "$filter" | sed 's/Test\*$//')
+        echo "  Running $suite_name tests..."
+        if ./build/all_tests --gtest_filter="$filter" > /dev/null 2>&1; then
+            print_success "$suite_name tests passed ($config)"
+            return 0
+        else
+            print_error "$suite_name tests failed ($config)"
             return 1
         fi
     else
@@ -132,20 +150,26 @@ show_help() {
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
-    echo "  --quick       Run only debug tests (fastest)"
+    echo "  --quick       Run only debug tests (fastest build)"
     echo "  --sanitize    Run with memory sanitizers"
     echo "  --release     Run optimized release build"
     echo "  --individual  Run individual test suites separately"
+    echo "  --tensor      Run only tensor tests"
+    echo "  --matmul      Run only matrix multiplication tests"
+    echo "  --relu        Run only ReLU tests"
+    echo "  --sigmoid     Run only sigmoid tests"
+    echo "  --softmax     Run only softmax tests"
     echo "  --valgrind    Run with valgrind memory check"
     echo "  --all         Run all test configurations (default)"
     echo "  --help        Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                         # Run all configurations"
-    echo "  $0 --quick                 # Quick debug test only"
-    echo "  $0 --individual            # Run individual test suites"
-    echo "  $0 --sanitize --individual # Sanitized build with individual tests"
-    echo "  $0 --release --valgrind    # Release build + valgrind"
+    echo "  $0                    # Run all configurations"
+    echo "  $0 --quick           # Quick debug test only"
+    echo "  $0 --relu            # Just ReLU tests (debug mode)"
+    echo "  $0 --individual      # Run individual test suites"
+    echo "  $0 --sanitize --relu # ReLU tests with memory sanitizers"
+    echo "  $0 --release --valgrind  # Release build + valgrind"
 }
 
 # Parse command line arguments
@@ -153,6 +177,7 @@ QUICK=false
 SANITIZE=false
 RELEASE=false
 INDIVIDUAL=false
+SINGLE_SUITE=""
 VALGRIND=false
 ALL=true
 
@@ -175,6 +200,31 @@ while [[ $# -gt 0 ]]; do
             ;;
         --individual)
             INDIVIDUAL=true
+            shift
+            ;;
+        --tensor)
+            SINGLE_SUITE="TensorTest*"
+            ALL=false
+            shift
+            ;;
+        --matmul)
+            SINGLE_SUITE="MatmulTest*"
+            ALL=false
+            shift
+            ;;
+        --relu)
+            SINGLE_SUITE="ReluTest*"
+            ALL=false
+            shift
+            ;;
+        --sigmoid)
+            SINGLE_SUITE="SigmoidTest*"
+            ALL=false
+            shift
+            ;;
+        --softmax)
+            SINGLE_SUITE="SoftmaxTest*"
+            ALL=false
             shift
             ;;
         --valgrind)
@@ -211,8 +261,8 @@ TOTAL_PASSED=0
 TOTAL_FAILED=0
 
 # Run tests based on arguments
-if $ALL || $QUICK; then
-    if run_test_config "debug" "Debug Build Tests" "$INDIVIDUAL"; then
+if $ALL || $QUICK || [ -n "$SINGLE_SUITE" ]; then
+    if run_test_config "debug" "Debug Build Tests" "$INDIVIDUAL" "$SINGLE_SUITE"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))
@@ -220,7 +270,7 @@ if $ALL || $QUICK; then
 fi
 
 if $ALL || $SANITIZE; then
-    if run_test_config "sanitize" "Sanitized Build Tests (Memory Safety)" "$INDIVIDUAL"; then
+    if run_test_config "sanitize" "Sanitized Build Tests (Memory Safety)" "$INDIVIDUAL" "$SINGLE_SUITE"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))
@@ -228,7 +278,7 @@ if $ALL || $SANITIZE; then
 fi
 
 if $ALL || $RELEASE; then
-    if run_test_config "release" "Release Build Tests (Optimized)" "$INDIVIDUAL"; then
+    if run_test_config "release" "Release Build Tests (Optimized)" "$INDIVIDUAL" "$SINGLE_SUITE"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))

@@ -26,7 +26,7 @@ GTEST_LIBS = -L/opt/homebrew/lib -L/usr/local/lib -lgtest -lgtest_main -pthread
 TEST_EXECUTABLE = $(BUILD_DIR)/all_tests
 
 # Main targets
-.PHONY: all clean debug release sanitize test test-all test-quick test-all-suites test-tensor test-matmul test-relu test-sigmoid test-softmax help install-gtest
+.PHONY: all clean debug release sanitize test test-all help install-gtest
 
 all: debug
 
@@ -58,39 +58,14 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TEST_OBJECTS) | $(BUILD_DIR)
 # Build tests only
 test: $(TEST_EXECUTABLE)
 
-# Run all tests
-test-all-suites: $(TEST_EXECUTABLE)
-	@echo "Running all test suites..."
-	@./$(TEST_EXECUTABLE)
-
-# Run specific test suites using gtest filters
-test-tensor: $(TEST_EXECUTABLE)
-	@echo "Running Tensor tests..."
-	@./$(TEST_EXECUTABLE) --gtest_filter="TensorTest*"
-
-test-matmul: $(TEST_EXECUTABLE)
-	@echo "Running MatMul tests..."
-	@./$(TEST_EXECUTABLE) --gtest_filter="MatmulTest*"
-
-test-relu: $(TEST_EXECUTABLE)
-	@echo "Running ReLU tests..."
-	@./$(TEST_EXECUTABLE) --gtest_filter="ReluTest*"
-
-test-sigmoid: $(TEST_EXECUTABLE)
-	@echo "Running Sigmoid tests..."
-	@./$(TEST_EXECUTABLE) --gtest_filter="SigmoidTest*"
-
-test-softmax: $(TEST_EXECUTABLE)
-	@echo "Running Softmax tests..."
-	@./$(TEST_EXECUTABLE) --gtest_filter="SoftmaxTest*"
-
-# Run comprehensive test suite
+# Test targets (all delegated to run_tests.sh)
 test-all:
-	./run_tests.sh --all
-
-# Run quick tests only
-test-quick:
-	./run_tests.sh --quick
+	@echo "Use ./run_tests.sh for running tests"
+	@echo "Examples:"
+	@echo "  ./run_tests.sh --all      # All configurations"
+	@echo "  ./run_tests.sh --quick    # Quick debug tests" 
+	@echo "  ./run_tests.sh --sanitize # Memory safety tests"
+	@echo "  ./run_tests.sh --help     # See all options"
 
 # Clean build files
 clean:
@@ -99,30 +74,31 @@ clean:
 # Help targets
 help:
 	@echo "Available targets:"
-	@echo "  all               Build all tests (default: debug)"
+	@echo "  all               Build test executable (default: debug)"
 	@echo "  debug             Build debug version of test executable"
 	@echo "  release           Build optimized release version"
 	@echo "  sanitize          Build with memory sanitizers"
 	@echo "  test              Build test executable"
-	@echo "  test-all-suites   Run all test suites"
-	@echo "  test-all          Run comprehensive test suite (via run_tests.sh)"
-	@echo "  test-quick        Run quick debug tests only"
+	@echo "  test-all          Show test running instructions"
 	@echo "  clean             Remove build files"
 	@echo "  install-gtest     Show Google Test installation instructions"
-	@echo ""
-	@echo "Individual test targets (using gtest filters):"
-	@echo "  test-tensor       Run only tensor class tests"
-	@echo "  test-matmul       Run only matrix multiplication tests"
-	@echo "  test-relu         Run only ReLU activation tests"
-	@echo "  test-sigmoid      Run only sigmoid activation tests"
-	@echo "  test-softmax      Run only softmax activation tests"
 	@echo ""
 	@echo "Test executable:"
 	@echo "  $(TEST_EXECUTABLE)    - Single executable with all tests"
 	@echo ""
-	@echo "Examples:"
-	@echo "  make test-relu                    # Run just ReLU tests"
-	@echo "  $(TEST_EXECUTABLE) --gtest_list_tests  # List all available tests"
+	@echo "Running tests:"
+	@echo "  Use ./run_tests.sh for all test operations:"
+	@echo "    ./run_tests.sh --all        # All configurations (debug/release/sanitize)"
+	@echo "    ./run_tests.sh --quick      # Quick debug tests only"
+	@echo "    ./run_tests.sh --sanitize   # Memory safety tests"
+	@echo "    ./run_tests.sh --individual # Run each test suite separately"
+	@echo "    ./run_tests.sh --valgrind   # Memory leak checking"
+	@echo "    ./run_tests.sh --help       # See all options"
+	@echo ""
+	@echo "Direct executable usage:"
+	@echo "    $(TEST_EXECUTABLE)                        # Run all tests"
+	@echo "    $(TEST_EXECUTABLE) --gtest_filter='*ReLU*'    # Run specific tests"
+	@echo "    $(TEST_EXECUTABLE) --gtest_list_tests         # List all tests"
 
 # Install google test (help target)
 install-gtest:
