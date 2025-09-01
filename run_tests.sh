@@ -201,9 +201,9 @@ echo -e "Configurations passed: ${GREEN}$TOTAL_PASSED${NC}"
 echo -e "Configurations failed: ${RED}$TOTAL_FAILED${NC}"
 
 if [ $TOTAL_FAILED -eq 0 ]; then
-    print_success "All test configurations passed! 🎉"
+    print_success "All test configurations passed."
     exit 0
 else
-    print_error "Some test configurations failed!"
+    print_error "Some test configurations failed."
     exit 1
 fi

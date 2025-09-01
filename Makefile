@@ -55,9 +55,8 @@ $(BUILD_DIR)/test_%.o: $(TEST_DIR)/%.cpp | $(BUILD_DIR)
 $(TEST_EXECUTABLE): $(OBJECTS) $(TEST_OBJECTS) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(GTEST_LIBS)
 
-# Run tests
+# Build tests only
 test: $(TEST_EXECUTABLE)
-	./$(TEST_EXECUTABLE)
 
 # Run comprehensive test suite
 test-all:
