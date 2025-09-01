@@ -1,0 +1,20 @@
+# build directory
+build
+build/**
+
+# macos files
+.DS_Store
+
+# windows files
+Thumbs.db
+ehthumbs.db
+
+# linux files
+.directory
+.Trash-1000
+
+# development files
+.vscode
+.cursor
+PLAN.md
+
