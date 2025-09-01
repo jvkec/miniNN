@@ -1,13 +1,14 @@
-nmak#!/bin/bash
+#!/bin/bash
 
 # run_tests.sh - Comprehensive test runner for miniNN project
 # Usage: ./run_tests.sh [options]
 # Options:
-#   --quick    : Run only basic tests (debug mode)
-#   --sanitize : Run with memory sanitizers
-#   --release  : Run optimized release build
-#   --all      : Run all test configurations (default)
-#   --help     : Show this help message
+#   --quick      : Run only basic tests (debug mode)
+#   --sanitize   : Run with memory sanitizers
+#   --release    : Run optimized release build
+#   --individual : Run individual test suites separately
+#   --all        : Run all test configurations (default)
+#   --help       : Show this help message
 
 set -e  # Exit on any error
 
@@ -41,6 +42,7 @@ print_error() {
 run_test_config() {
     local config=$1
     local description=$2
+    local individual=$3
     
     print_header "Running $description"
     
@@ -55,14 +57,53 @@ run_test_config() {
         return 1
     fi
     
-    # Run tests
-    if make test; then
-        print_success "All tests passed ($config)"
-        return 0
+    # Run tests - either individual or combined
+    if [ "$individual" = "true" ]; then
+        if run_individual_tests; then
+            print_success "All individual tests passed ($config)"
+            return 0
+        else
+            print_error "Some individual tests failed ($config)"
+            return 1
+        fi
     else
-        print_error "Tests failed ($config)"
+        # Run all tests together
+        if ./build/all_tests > /dev/null 2>&1; then
+            print_success "All tests passed ($config)"
+            return 0
+        else
+            print_error "Tests failed ($config)"
+            return 1
+        fi
+    fi
+}
+
+# Function to run individual test suites
+run_individual_tests() {
+    local failed=0
+    local test_filters=("TensorTest*" "MatmulTest*" "ReluTest*" "SigmoidTest*" "SoftmaxTest*")
+    local test_names=("Tensor" "MatMul" "ReLU" "Sigmoid" "Softmax")
+    local exe="./build/all_tests"
+    
+    if [ ! -f "$exe" ]; then
+        print_error "  Test executable not found: $exe"
         return 1
     fi
+    
+    for i in "${!test_filters[@]}"; do
+        local filter="${test_filters[$i]}"
+        local name="${test_names[$i]}"
+        
+        echo "  Running $name tests..."
+        if $exe --gtest_filter="$filter" > /dev/null 2>&1; then
+            print_success "  $name tests passed"
+        else
+            print_error "  $name tests failed"
+            failed=1
+        fi
+    done
+    
+    return $failed
 }
 
 # Function to run valgrind if available
@@ -73,7 +114,7 @@ run_valgrind() {
         make clean > /dev/null 2>&1
         make debug > /dev/null 2>&1
         
-        if valgrind --leak-check=full --error-exitcode=1 --quiet ./build/tensor_test > /dev/null 2>&1; then
+        if valgrind --leak-check=full --error-exitcode=1 --quiet ./build/all_tests > /dev/null 2>&1; then
             print_success "Valgrind: No memory leaks detected"
         else
             print_warning "Valgrind: Potential issues detected (run manually for details)"
@@ -91,24 +132,27 @@ show_help() {
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
-    echo "  --quick     Run only debug tests (fastest)"
-    echo "  --sanitize  Run with memory sanitizers"
-    echo "  --release   Run optimized release build"
-    echo "  --valgrind  Run with valgrind memory check"
-    echo "  --all       Run all test configurations (default)"
-    echo "  --help      Show this help message"
+    echo "  --quick       Run only debug tests (fastest)"
+    echo "  --sanitize    Run with memory sanitizers"
+    echo "  --release     Run optimized release build"
+    echo "  --individual  Run individual test suites separately"
+    echo "  --valgrind    Run with valgrind memory check"
+    echo "  --all         Run all test configurations (default)"
+    echo "  --help        Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                    # Run all configurations"
-    echo "  $0 --quick           # Quick debug test only"
-    echo "  $0 --sanitize        # Run with sanitizers"
-    echo "  $0 --release --valgrind  # Release build + valgrind"
+    echo "  $0                         # Run all configurations"
+    echo "  $0 --quick                 # Quick debug test only"
+    echo "  $0 --individual            # Run individual test suites"
+    echo "  $0 --sanitize --individual # Sanitized build with individual tests"
+    echo "  $0 --release --valgrind    # Release build + valgrind"
 }
 
 # Parse command line arguments
 QUICK=false
 SANITIZE=false
 RELEASE=false
+INDIVIDUAL=false
 VALGRIND=false
 ALL=true
 
@@ -127,6 +171,10 @@ while [[ $# -gt 0 ]]; do
         --release)
             RELEASE=true
             ALL=false
+            shift
+            ;;
+        --individual)
+            INDIVIDUAL=true
             shift
             ;;
         --valgrind)
@@ -164,7 +212,7 @@ TOTAL_FAILED=0
 
 # Run tests based on arguments
 if $ALL || $QUICK; then
-    if run_test_config "debug" "Debug Build Tests"; then
+    if run_test_config "debug" "Debug Build Tests" "$INDIVIDUAL"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))
@@ -172,7 +220,7 @@ if $ALL || $QUICK; then
 fi
 
 if $ALL || $SANITIZE; then
-    if run_test_config "sanitize" "Sanitized Build Tests (Memory Safety)"; then
+    if run_test_config "sanitize" "Sanitized Build Tests (Memory Safety)" "$INDIVIDUAL"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))
@@ -180,7 +228,7 @@ if $ALL || $SANITIZE; then
 fi
 
 if $ALL || $RELEASE; then
-    if run_test_config "release" "Release Build Tests (Optimized)"; then
+    if run_test_config "release" "Release Build Tests (Optimized)" "$INDIVIDUAL"; then
         ((TOTAL_PASSED++))
     else
         ((TOTAL_FAILED++))

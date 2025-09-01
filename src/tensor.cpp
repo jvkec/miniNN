@@ -12,6 +12,7 @@
 
 namespace mininn 
 {
+    // using initialize list to set default values
     Tensor::Tensor()
         : shape_{}
         , total_size_(0)
