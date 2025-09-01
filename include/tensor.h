@@ -19,7 +19,7 @@ namespace mininn
     {
     public:
         // constructors
-        Tensor() = default;
+        Tensor();
         explicit Tensor(const std::vector<size_t>& shape, DataType dtype = DataType::FLOAT32);
         Tensor(const std::vector<size_t>& shape, const std::vector<float>& data, 
                DataType dtype = DataType::FLOAT32);

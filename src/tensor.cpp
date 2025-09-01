@@ -12,6 +12,14 @@
 
 namespace mininn 
 {
+    Tensor::Tensor()
+        : shape_{}
+        , total_size_(0)
+        , dtype_(DataType::FLOAT32)
+        , data_(nullptr)
+    {
+    }
+
     Tensor::Tensor(const std::vector<size_t>& shape, DataType dtype)
         : shape_(shape)
         , dtype_(dtype)
