@@ -8,6 +8,7 @@ SANITIZE_FLAGS = -fsanitize=address -fsanitize=undefined # sanitizers for memory
 SRC_DIR = src
 INC_DIR = include
 TEST_DIR = tests
+EXAMPLES_DIR = examples
 BUILD_DIR = build
 
 # Source files
@@ -24,9 +25,10 @@ GTEST_LIBS = -L/opt/homebrew/lib -L/usr/local/lib -lgtest -lgtest_main -pthread
 
 # Executables
 TEST_EXECUTABLE = $(BUILD_DIR)/all_tests
+EXAMPLE_EXECUTABLE = $(BUILD_DIR)/simple_inference_example
 
 # Main targets
-.PHONY: all clean debug release sanitize test test-all help install-gtest
+.PHONY: all clean debug release sanitize test test-all example help install-gtest
 
 all: debug
 
@@ -58,14 +60,23 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TEST_OBJECTS) | $(BUILD_DIR)
 # Build tests only
 test: $(TEST_EXECUTABLE)
 
-# Test targets (all delegated to run_tests.sh)
+# Build and run example
+example: $(EXAMPLE_EXECUTABLE)
+	@echo "Running inference example..."
+	$(EXAMPLE_EXECUTABLE)
+
+# Build example executable
+$(EXAMPLE_EXECUTABLE): $(OBJECTS) $(EXAMPLES_DIR)/simple_inference_example.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_DIR)/simple_inference_example.cpp $(OBJECTS) -o $@
+
+# Test targets (all delegated to run_unit_tests.sh)
 test-all:
-	@echo "Use ./run_tests.sh for running tests"
+	@echo "Use ./run_unit_tests.sh for running tests"
 	@echo "Examples:"
-	@echo "  ./run_tests.sh --all      # All configurations"
-	@echo "  ./run_tests.sh --quick    # Quick debug tests" 
-	@echo "  ./run_tests.sh --sanitize # Memory safety tests"
-	@echo "  ./run_tests.sh --help     # See all options"
+	@echo "  ./run_unit_tests.sh --all      # All configurations"
+	@echo "  ./run_unit_tests.sh --quick    # Quick debug tests" 
+	@echo "  ./run_unit_tests.sh --sanitize # Memory safety tests"
+	@echo "  ./run_unit_tests.sh --help     # See all options"
 
 # Clean build files
 clean:
@@ -80,6 +91,7 @@ help:
 	@echo "  sanitize          Build with memory sanitizers"
 	@echo "  test              Build test executable"
 	@echo "  test-all          Show test running instructions"
+	@echo "  example           Build and run inference example"
 	@echo "  clean             Remove build files"
 	@echo "  install-gtest     Show Google Test installation instructions"
 	@echo ""
@@ -87,13 +99,13 @@ help:
 	@echo "  $(TEST_EXECUTABLE)    - Single executable with all tests"
 	@echo ""
 	@echo "Running tests:"
-	@echo "  Use ./run_tests.sh for all test operations:"
-	@echo "    ./run_tests.sh --all        # All configurations (debug/release/sanitize)"
-	@echo "    ./run_tests.sh --quick      # Quick debug tests only"
-	@echo "    ./run_tests.sh --sanitize   # Memory safety tests"
-	@echo "    ./run_tests.sh --individual # Run each test suite separately"
-	@echo "    ./run_tests.sh --valgrind   # Memory leak checking"
-	@echo "    ./run_tests.sh --help       # See all options"
+	@echo "  Use ./run_unit_tests.sh for all test operations:"
+	@echo "    ./run_unit_tests.sh --all        # All configurations (debug/release/sanitize)"
+	@echo "    ./run_unit_tests.sh --quick      # Quick debug tests only"
+	@echo "    ./run_unit_tests.sh --sanitize   # Memory safety tests"
+	@echo "    ./run_unit_tests.sh --individual # Run each test suite separately"
+	@echo "    ./run_unit_tests.sh --valgrind   # Memory leak checking"
+	@echo "    ./run_unit_tests.sh --help       # See all options"
 	@echo ""
 	@echo "Direct executable usage:"
 	@echo "    $(TEST_EXECUTABLE)                        # Run all tests"

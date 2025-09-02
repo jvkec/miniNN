@@ -1,6 +1,5 @@
 # build directory
-build
-build/**
+build/
 
 # macos files
 .DS_Store

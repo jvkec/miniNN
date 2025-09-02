@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# run_tests.sh - Comprehensive test runner for miniNN project
-# Usage: ./run_tests.sh [options]
+# run_unit_tests.sh - Comprehensive test runner for miniNN project
+# Usage: ./run_unit_tests.sh [options]
 # Options:
 #   --quick      : Run only basic tests (debug mode)
 #   --sanitize   : Run with memory sanitizers
