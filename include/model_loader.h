@@ -40,6 +40,9 @@ namespace mininn
         LinearLayer(const Tensor& weights, const Tensor& bias);
         void forward(const Tensor& input, Tensor& output) override;
         
+        // Make ModelLoader a friend so it can access weights/bias for saving
+        friend class ModelLoader;
+        
     private:
         Tensor weights_;  // weight matrix [input_size, output_size]
         Tensor bias_;     // bias vector [output_size]
@@ -132,6 +135,9 @@ namespace mininn
         // write binary data to file
         template<typename T>  
         static void writeBinary(std::ofstream& file, const T& value);
+        
+        // helper function to save tensors
+        static void saveTensor(std::ofstream& file, const Tensor& tensor);
     };
 
 } // namespace mininn

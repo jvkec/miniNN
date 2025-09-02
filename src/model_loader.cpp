@@ -309,12 +309,98 @@ namespace mininn
         }
     }
 
-    // save functionality (for completeness)
-    void ModelLoader::saveToFile(const Model& /* model */, const std::string& /* filepath */)
+    // Helper function to save a tensor
+    void ModelLoader::saveTensor(std::ofstream& file, const Tensor& tensor)
     {
-        // TODO: implement model saving functionality
-        // this would be useful for creating test models or converting from other formats
-        throw std::runtime_error("Model saving not yet implemented");
+        // Write tensor metadata
+        uint8_t dtype_raw = static_cast<uint8_t>(tensor.dtype());
+        writeBinary(file, dtype_raw);
+        
+        uint32_t rank = static_cast<uint32_t>(tensor.rank());
+        writeBinary(file, rank);
+        
+        // Write shape
+        const auto& shape = tensor.shape();
+        for (size_t dim : shape)
+        {
+            uint32_t dim_u32 = static_cast<uint32_t>(dim);
+            writeBinary(file, dim_u32);
+        }
+        
+        // Write data
+        file.write(reinterpret_cast<const char*>(tensor.data()), tensor.size() * sizeof(float));
+        if (!file.good())
+        {
+            throw std::runtime_error("Failed to write tensor data");
+        }
+    }
+
+    void ModelLoader::saveToFile(const Model& model, const std::string& filepath)
+    {
+        std::ofstream file(filepath, std::ios::binary);
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Failed to open file for writing: " + filepath);
+        }
+
+        try
+        {
+            // Write header
+            ModelFormat::Header header;
+            header.magic = ModelFormat::MAGIC_NUMBER;
+            header.version_major = ModelFormat::VERSION_MAJOR;
+            header.version_minor = ModelFormat::VERSION_MINOR;
+            header.num_layers = static_cast<uint32_t>(model.getLayers().size());
+            header.reserved = 0;
+            
+            writeBinary(file, header);
+
+            // Write layers
+            for (const auto& layer : model.getLayers())
+            {
+                // Write layer type
+                uint8_t layer_type = static_cast<uint8_t>(layer->getType());
+                writeBinary(file, layer_type);
+
+                // Write layer-specific data
+                if (layer->getType() == LayerType::LINEAR)
+                {
+                    const auto* linear_layer = dynamic_cast<const LinearLayer*>(layer.get());
+                    if (!linear_layer)
+                    {
+                        throw std::runtime_error("Failed to cast to LinearLayer");
+                    }
+
+                    // Save weights and bias
+                    saveTensor(file, linear_layer->weights_);
+                    saveTensor(file, linear_layer->bias_);
+                }
+                // Other layer types don't have parameters to save
+            }
+
+            // Write input/output shapes
+            const auto& input_shape = model.getInputShape();
+            uint32_t input_rank = static_cast<uint32_t>(input_shape.size());
+            writeBinary(file, input_rank);
+            for (size_t dim : input_shape)
+            {
+                uint32_t dim_u32 = static_cast<uint32_t>(dim);
+                writeBinary(file, dim_u32);
+            }
+
+            const auto& output_shape = model.getOutputShape();
+            uint32_t output_rank = static_cast<uint32_t>(output_shape.size());
+            writeBinary(file, output_rank);
+            for (size_t dim : output_shape)
+            {
+                uint32_t dim_u32 = static_cast<uint32_t>(dim);
+                writeBinary(file, dim_u32);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            throw std::runtime_error("Failed to save model to " + filepath + ": " + e.what());
+        }
     }
 
 } // namespace mininn
