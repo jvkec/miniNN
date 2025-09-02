@@ -25,10 +25,12 @@ GTEST_LIBS = -L/opt/homebrew/lib -L/usr/local/lib -lgtest -lgtest_main -pthread
 
 # Executables
 TEST_EXECUTABLE = $(BUILD_DIR)/all_tests
-EXAMPLE_EXECUTABLE = $(BUILD_DIR)/simple_inference_example
+SIMPLE_EXECUTABLE = $(BUILD_DIR)/simple_inference_example
+MNIST_EXECUTABLE = $(BUILD_DIR)/mnist_inference_example
+MODEL_IO_EXECUTABLE = $(BUILD_DIR)/model_io_example
 
 # Main targets
-.PHONY: all clean debug release sanitize test test-all example help install-gtest
+.PHONY: all clean debug release sanitize test test-all simple mnist model-io help install-gtest
 
 all: debug
 
@@ -60,14 +62,28 @@ $(TEST_EXECUTABLE): $(OBJECTS) $(TEST_OBJECTS) | $(BUILD_DIR)
 # Build tests only
 test: $(TEST_EXECUTABLE)
 
-# Build and run example
-example: $(EXAMPLE_EXECUTABLE)
-	@echo "Running inference example..."
-	$(EXAMPLE_EXECUTABLE)
+# Build and run examples
+example: $(SIMPLE_EXECUTABLE)
+	@echo "Running simple inference example..."
+	$(SIMPLE_EXECUTABLE)
 
-# Build example executable
-$(EXAMPLE_EXECUTABLE): $(OBJECTS) $(EXAMPLES_DIR)/simple_inference_example.cpp | $(BUILD_DIR)
+mnist: $(MNIST_EXECUTABLE)
+	@echo "Running MNIST inference example..."
+	$(MNIST_EXECUTABLE)
+
+# Build example executables
+$(SIMPLE_EXECUTABLE): $(OBJECTS) $(EXAMPLES_DIR)/simple_inference_example.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(EXAMPLES_DIR)/simple_inference_example.cpp $(OBJECTS) -o $@
+
+$(MNIST_EXECUTABLE): $(OBJECTS) $(EXAMPLES_DIR)/mnist_inference_example.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_DIR)/mnist_inference_example.cpp $(OBJECTS) -o $@
+
+$(MODEL_IO_EXECUTABLE): $(OBJECTS) $(EXAMPLES_DIR)/model_io_example.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(EXAMPLES_DIR)/model_io_example.cpp $(OBJECTS) -o $@
+
+model-io: $(MODEL_IO_EXECUTABLE)
+	@echo "Running model I/O example..."
+	$(MODEL_IO_EXECUTABLE)
 
 # Test targets (all delegated to run_unit_tests.sh)
 test-all:
@@ -91,7 +107,9 @@ help:
 	@echo "  sanitize          Build with memory sanitizers"
 	@echo "  test              Build test executable"
 	@echo "  test-all          Show test running instructions"
-	@echo "  example           Build and run inference example"
+	@echo "  simple            Build and run simple inference example"
+	@echo "  mnist             Build and run MNIST inference example"
+	@echo "  model-io          Build and run model I/O example"
 	@echo "  clean             Remove build files"
 	@echo "  install-gtest     Show Google Test installation instructions"
 	@echo ""
