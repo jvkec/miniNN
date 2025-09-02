@@ -33,8 +33,8 @@ namespace mininn
         const size_t n = shape1[1];
         const size_t p = shape2[1];
 
-        // resize result tensor to correct dimensions
-        result.reshape({m, p});
+        // create result tensor with correct dimensions
+        result = Tensor({m, p});
 
         for (size_t i = 0; i < m; ++i)
         {
