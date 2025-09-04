@@ -1,5 +1,5 @@
 # miniNN
-Simplified neural network inference engine inspired by llama.cpp. Learning project for me!
+A simplified neural network inference engine. Learning project for me!
 
 ## Included Stuff
 
