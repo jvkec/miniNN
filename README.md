@@ -1,5 +1,9 @@
 # miniNN
-A simplified neural network inference engine. Learning project for me!
+A simplified neural network inference engine.
+
+## Why I built this
+
+I wanted to expand my C++ skills beyond what was taught in the classroom and I thought it would be perfect to make a very simple inference engine with just the basics.
 
 ## Included Stuff
 
